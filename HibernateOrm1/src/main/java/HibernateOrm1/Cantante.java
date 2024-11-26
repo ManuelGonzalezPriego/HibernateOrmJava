@@ -5,9 +5,6 @@ package HibernateOrm1;
 import jakarta.persistence.*; 
 import java.time.LocalDate;
 
-import org.hibernate.Session;
-import org.hibernate.Transaction;
-
 @Entity
 @Table(name = "cantante")
 public class Cantante {
@@ -25,17 +22,15 @@ public class Cantante {
 	@Column(name = "album", nullable = false)
 	private String album;
 	
-	public Cantante(int codigo,String nombre, LocalDate ano,String album) {
-		this.codigo=codigo;
-		this.nombre = nombre;
-		this.ano = ano;
-		this.album=album;
-	}
+	@ManyToOne
+	@JoinColumn(name = "genero_id")
+	private Genero genero;
 	
-	public Cantante(String nombre, LocalDate ano,String album) {
+	public Cantante(String nombre, LocalDate ano,String album,Genero genero) {
 		this.nombre = nombre;
 		this.ano = ano;
 		this.album=album;
+		this.genero=genero;
 	}
 	
 	public Cantante() {
@@ -74,9 +69,17 @@ public class Cantante {
 		this.album = album;
 	}
 
+	public Genero getGenero() {
+		return genero;
+	}
+
+	public void setGenero(Genero genero) {
+		this.genero = genero;
+	}
+
 	@Override
 	public String toString() {
-		return nombre + ", ano=" + ano + ", album=" + album + ".";
+		return nombre + ", ano=" + ano + ", album=" + album + ", genero="+ genero;
 	}
 	
 }

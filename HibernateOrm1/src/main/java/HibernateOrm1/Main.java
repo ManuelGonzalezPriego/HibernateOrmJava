@@ -20,7 +20,7 @@ public class Main {
 		boolean salida=false;
 		
 		do {
-			System.out.println("1.Alta De Album.\n2.Consulta De Album.\n3.Actualizar Cantante.\n4.Borrar Album.\n0.Salir.\n");
+			System.out.println("1.Alta De Album.\n2.Consulta De Album.\n3.Actualizar Cantante.\n4.Borrar Album.\n5.Consultar Cantantes De Un Genero.\n6.Ver carntantes.\n0.Salir.\n");
 			System.out.println("Inserta la opción que desea ejecutar:");
 			int menu=teclado.nextInt();
 			teclado.nextLine();
@@ -44,6 +44,15 @@ public class Main {
 				 borrarCantante(teclado);
 				 break;
 			 }
+			 case 5:{
+				 System.out.println("Inserta el genero que deseas consultar:");
+				 consultarCantantesGen(teclado.nextLine());
+				 break;
+			 }
+			 case 6:{
+				 mostrarCantantes();
+				 break;
+			 }
 			 case 0:{
 				 teclado.close();
 				 salida=true;
@@ -56,6 +65,42 @@ public class Main {
 			}
 		}while(!salida);
 	}
+	public static void consultarCantantesGen(String nombre) {
+		List<Cantante>cantantes=new ArrayList<>();
+		try(Session session=HibernateUtil.getSessionFactory().openSession()){
+			session.beginTransaction();
+			Genero genero=session.createQuery("from Genero where genero= :genero",Genero.class).setParameter("genero", nombre).getSingleResult();
+			cantantes.addAll(session.createQuery("from Cantante where genero= :genero",Cantante.class).setParameter("genero", genero).list());
+
+		}catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		System.out.println();
+		for (Cantante i : cantantes) {
+			System.out.println(i.toString());
+		}
+		System.out.println();
+	}
+	
+	public static void mostrarCantantes() {
+		List <Cantante>cantantes=new ArrayList<>();
+		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+			session.beginTransaction();
+			
+			cantantes.addAll(session.createQuery("from Cantante", Cantante.class).list());
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		System.out.println();
+		for (Cantante i : cantantes) {
+			System.out.println(i.toString());
+		}
+		System.out.println();
+	}
+	
 	public static void borrarCantante(Scanner teclado) {
 		System.out.println("Inserta el nombre del cantante:");
 		String nombre=teclado.nextLine();
@@ -166,42 +211,48 @@ public class Main {
 			 
 		System.out.println("Inserta el album de el cantante:");
 		String album=teclado.nextLine();
-			 
-		insertarCantante(nombre,ano,album);
+		
+		System.out.println("Inserta el genero:");
+		String genero=teclado.nextLine();
+		
+		insertarCantante(nombre,ano,album,genero);
 	}
 	
+	
 	//Inserta un cantante
-	public static void insertarCantante(String nombre,LocalDate ano, String album) {		
-		Cantante cantante=new Cantante(nombre,ano,album);
+	public static void insertarCantante(String nombre,LocalDate ano, String album,String genero) {	
+		Cantante cantante=new Cantante(album,ano,nombre,new Genero());
 		
-		Transaction transaction = null;
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-			// Empieza la transaction
-			transaction = session.beginTransaction();
-			// Sabal el objeto que hemos creado
-			session.persist(cantante);
-			// Commit la transaction
-			transaction.commit();
-		} catch (Exception e) {
-			if (transaction != null) {
-				transaction.rollback();
+			session.beginTransaction();
+			Genero generoExistente = session.createQuery("from Genero where genero = :genero", Genero.class).setParameter("genero", genero).uniqueResult();
+			if (generoExistente != null) {
+				cantante.setGenero(generoExistente);
+				session.persist(cantante);
+			} 
+			else {
+				// Crear un nuevo género si no existe
+				Genero nuevoGenero = new Genero(genero);
+				session.persist(nuevoGenero);
+				cantante.setGenero(nuevoGenero);
+				session.persist(cantante);
 			}
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
 	}
 	
 	//Busca y devuelve el objeto con el nombre indicado
 	public static List<Cantante> buscarCantante(String nombre) {		
-		List <Cantante>cantante=new ArrayList<>();
+		List <Cantante>cantantes=new ArrayList<>();
 		try (Session session = HibernateUtil.getSessionFactory().openSession()) {
 			session.beginTransaction();
 			
-			cantante.addAll(session.createQuery("from Cantante where nombre = :nombre", Cantante.class).setParameter("nombre", nombre).list());
+			cantantes.addAll(session.createQuery("from Cantante where nombre = :nombre", Cantante.class).setParameter("nombre", nombre).list());
 			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return cantante;
+		return cantantes;
 	}
 }

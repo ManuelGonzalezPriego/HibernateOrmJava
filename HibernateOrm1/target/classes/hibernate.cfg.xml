@@ -18,6 +18,8 @@
         <property name="hibernate.hbm2ddl.auto">update</property>
 
         <!-- Mention annotated class -->
+        <mapping class="HibernateOrm1.Genero"/>
         <mapping class="HibernateOrm1.Cantante"/>
+        
     </session-factory>
 </hibernate-configuration>
